@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>booking appointment crudcrud</title>
+</head>
+
+<body>
+    <form onsubmit="saveToCloudStorage(event)">
+        <label>Name:</label>
+        <input type="text" name="username" id="usernameInputTag">
+        <label>Email:</label>
+        <input type="email" name="useremail" id="useremailInputTag">
+        <label>Phone Number:</label>
+        <input type="tel" name="phoneNumber" id="phonenumberInputTag">
+        <button type="submit">Submit</button>
+    </form>
+    <ul id="listofitems"></ul>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+    <script>
+        function saveToCloudStorage(event) {
+            event.preventDefault();
+            const name = event.target.username.value;
+            const email = event.target.useremail.value;
+            const number = event.target.phoneNumber.value;
+
+            const obj = {
+                name,
+                email,
+                number
+
+            }
+            //localStorage.setItem(obj.email,JSON.stringify(obj));
+
+            //localStorage.setItem('name',name);
+            //localStorage.setItem('email',email);
+            //localStorage.setItem('number',number);
+
+            //showUserOnScreen(obj)
+
+            axios.post("http://localhost:3000/add-details", obj)
+                .then((response) => {
+                    console.log('response from post request', response.data.newuser);
+                    showUserOnScreen(response.data.newuser);
+                    event.target.reset(); //after making post request we are making form fields empty
+                })
+                .catch((err) => {
+                    document.body.innerHTML = document.body.innerHTML + '<h4> Something Went Wrong </h4>'
+                    console.log(err);
+                })
+        }
+        window.addEventListener("DOMContentLoaded", () => {
+            axios.get("http://localhost:3000/get-details")
+                .then((response) => {
+                    console.log('response from get request', response.data.alluser.length);
+                    console.log('response from get request', response.data.alluser);
+                    for (var i = 0; i < response.data.alluser.length; i++) {
+                        showUserOnScreen(response.data.alluser[i]);
+                    }
+                })
+                .catch((err) => {
+                    console.log(err);
+                })
+        })
+
+        function showUserOnScreen(obj) {
+            const parentEle = document.getElementById('listofitems');
+            const childEle = document.createElement('li');
+            childEle.textContent = obj.name + '-' + obj.email + '-' + obj.number + '-';
+            parentEle.appendChild(childEle);
+
+
+            const delButton = document.createElement('input');
+            delButton.type = "button";
+            delButton.value = "Delete";
+            childEle.appendChild(delButton);
+
+            delButton.onclick = async () => {
+                try {
+                    console.log('ID value:', obj._id);
+                    const response = await axios.delete(`http://localhost:3000/delete-details/${obj._id}`);
+                    //console.log('response from delete request',response);
+                    //console.log('id value in front end delete request',obj._id)
+                    parentEle.removeChild(childEle);
+                }
+                catch (err) {
+                    console.log('Error from front end delete request', err);
+                }
+            }
+
+            const editButton = document.createElement('input');
+            editButton.type = "button";
+            editButton.value = "Edit";
+            childEle.appendChild(editButton);
+
+
+            editButton.onclick = () => {
+
+                axios.delete(`http://localhost:3000/delete-details/${obj._id}}`)
+                    .then((response) => {
+                        document.getElementById('usernameInputTag').value = obj.name;
+                        document.getElementById('useremailInputTag').value = obj.email;
+                        document.getElementById('phonenumberInputTag').value = obj.number;
+
+                        parentEle.removeChild(childEle);
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                    })
+            }
+
+        }
+    </script>
+</body>
+
+</html>
+
+<!--        
+    FAV INTERVIEW QUESTION PLEASE READ THIS
+    
+            window.addEventListener("DOMContentLoaded",() =>{
+            //axios.get is an asynchonous event it will execute after some time
+            const data = axios.get("https://crudcrud.com/api/2b285a9c6f23401f99d7744c2f16afa5/bookingAppointmentData")
+            .then((response) =>{
+                //console.log(response);
+                //when we use get method we retrieve data from crud crud and show it on screen(data includes previosly stored data also in crud crud)
+                for(var i=0;i<response.data.length;i++){
+                    showUserOnScreen(response.data[i]);
+                }
+            })
+            .catch((err)=>{
+                console.log(err);
+            })
+            console.log(data); i will get output as promise in pending state because axios.get is an asynchronous event
+            it executes after some delay (axios.get put in some different memory and once it executes axios.get puts in callbackque and event loop will put this axios.get to stack and it executes)
+            js does not wait for anything so thats the reason output we get as promise in pending state
+        })
+-->
+
